@@ -1,0 +1,449 @@
+function [H_In H_Out H_pc_In H_pc_Out m_In m_Out m_In_pc m_Out_pc ... 
+    H_In_pt H_Out_pt H_pc_In_pt H_pc_Out_pt m_In_pt m_Out_pt m_In_pc_pt m_Out_pc_pt] = ...
+    Variables_intermedias()%( Adults, Consume_In,Consume_Out )
+%VARIABLES_INTERMEDIAS Summary of this function goes here
+%   Detailed explanation goes here
+
+
+
+    
+%% 
+
+
+
+
+
+
+
+for s = 20%[20 40 60 80 ]
+    for c= .15%[.10 .15 .20 .25 .30]
+        for varBif = 0
+            for v1 = 12%[0 1]
+                for v2 = 2
+                    for v3 = 1%[ 1 2]
+                        for EPDP = 0%[0 .25 .50 .75 1 ]
+                            for FenoRec = 1%[1 2]
+                                for FenoDorm =  1   %[1 2 ]
+                                    for matrix = 6 %:15 %10
+                                        for replica =1:1 %4
+                                            
+                                            
+                                            
+                                            BigMatrix  = load(sprintf('../MATRICES/REP_C%s_S%d_CON1_M0_NM0_I100.mat',num2str(c),s));%[0 1 0; 0 0 1];%
+                                            
+                                            M   = BigMatrix.REP2(1+s*(matrix-1):s*matrix,:);
+                                            
+                                            TP  = M(:,end); %Creo vector de posición trófica (trophic position), que es la ultima columna de M
+                                            A   = M(:,1:end-1) ;
+                                            
+                                            %view(biograph(A))
+                                            
+                                            AT  = A';
+                                            %%
+                                            load(sprintf('../Series/s_C%3.2f_S%d_varBif%g_v1%d_v2%d_v3%d_epdp%3.2f_FR%d_FD%d_matrix%d_r%d.mat',c,s,varBif,v1,v2,v3,EPDP,FenoRec,FenoDorm,matrix, replica))
+                                            
+                                            
+
+                                            window = floor(2*52.18) ;
+                                            
+                                            %figure;plot(ST.to_plotAdults(:,end-window*2:end)')
+                                            %figure;plot(ST.to_plotAdults(ST.Extinct,1:30)')
+                                            %figure;plot(ST.to_plotDormants(ST.Extinct,1:30)')
+                                            
+                                            
+                                            %% AUTOCORRELATION AND PARTIAL AUTOCORRELATION IN MATLAB
+                                            
+                                            
+                                            % http://www.mathworks.com/help/econ/parcorr.html#btzk0a9-1
+                                            % http://www.mathworks.com/help/econ/autocorrelation-and-partial-autocorrelation.html
+                                            
+%                                             window_autocorr = floor(4*52.18) ;
+%                                             ab_autocorr = ST.to_plotAdults ;
+%                                             
+%                                             abD = ST.to_plotDormants(:,1:end) ;
+%                                             vivos = (1:s)';
+%                                             
+%                                             vivos(ST.Extinct) = 0 ;
+%                                             vivos = vivos(vivos>0);
+%                                             ab_vivos = ab_autocorr(vivos,end-window_autocorr:end)';
+%                                            
+%                                             
+%                                             Sincronia = corrcoef(ab_vivos);
+%                                             Sincronia = mean(mean(Sincronia,1),2);
+%                                             
+%                                             
+%                                             
+%                                             
+%                                             size_vivos = size(vivos,2) ;
+%                                             lag1_prom = NaN(size_vivos,1) ;
+%                                             lag2_prom = NaN(size_vivos,1) ;
+%                                             lag3_prom = NaN(size_vivos,1) ;
+%                                             i_index = 1 ;
+%                                             for i = vivos % cprre por la identidad de todos los no extintos
+%                                                 
+%                                                 [pacf,lags,bounds] = parcorr(ab_vivos(i_index,:)) ;
+%                                                 %i_index
+%                                                 %i
+%                                                 %figure
+%                                                 %parcorr(ab_vivos(i_index,:),105)
+%                                                 lag1_prom(i_index,1) = pacf(2) ; %comienza a contar de cero
+%                                                 lag2_prom(i_index,1) = pacf(3) ;
+%                                                 lag3_prom(i_index,1) = pacf(4) ;
+%                                                 i_index = i_index + 1 ;
+%                                             end
+%                                             
+%                                             lag1_prom
+%                                             lag2_prom
+%                                             lag3_prom
+%                                             
+                                            
+                                            %% Fuerzas de Interacción
+                                            
+                                            ab = ST.to_plotAdults(:,end-window:end) ;
+                                            vi_CI_In        =   ST.to_plotConsume.Consume_In_mat(:,:,end-window:end) ;
+                                            vi_CI_Out       =   ST.to_plotConsume.Consume_Out_mat(:,:,end-window:end) ;
+                                            m_vi_CI_In      =   mean(vi_CI_In,3) ;  
+                                            m_vi_CI_Out     =   mean(vi_CI_Out,3) ;
+                                            raw_In          =   m_vi_CI_In ;
+                                            raw_Out         =   m_vi_CI_Out ;
+                                            
+                                            % diagonal
+                                            
+                                            extintas = ST.Extinct;
+                                            basals = find(ST.TP==0)
+                                            nobasals = find(ST.TP>0);
+                                            
+                                            self = mean(ST.to_plotFlujos(1:length(basals),end-window:end)+ ...
+                                                ST.to_plotFlujos(length(basals)+1:2*length(basals),end-window:end),2) 
+                                            self_v = zeros(s,1) ;
+                                            self_v(basals) = self ;
+                                            auto_diag = diag(self_v) ;
+                                            raw_In          =   m_vi_CI_In  + auto_diag;
+                                            raw_Out         =   m_vi_CI_Out + auto_diag;
+                                                
+                                            % IN
+                                          
+                                            numb_In         =  s^2 -length(find(raw_In==0)) %numero efectivo de i.s. no cero
+%                                             raw_In
+%                                             raw_Out
+                                            T_In            =  sum(sum(raw_In,1),2)  % total system input
+                                            log_In          =  log(raw_In/T_In) 
+                                            log_In(log_In == -Inf) = 0    
+                                            H_In            = -sum(sum(raw_In/T_In.*log_In,1),2)/log(numb_In) %dividido por el numero de interacciones
+                                            
+                                            % m_IN
+                                            
+                                            T_i             =  repmat(sum(raw_In,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_In,2),1,s) ;
+                                            log_In_T_i      =  log(raw_In./T_i) ;
+                                            log_In_T_j      =  log(raw_In./T_j) ;
+                                            log_In_T_i(isnan(log_In_T_i))  = 0   ;
+                                            log_In_T_j(isnan(log_In_T_j))  = 0   ;
+                                            log_In_T_i(log_In_T_i == -Inf) = 0   ;
+                                            log_In_T_j(log_In_T_j == -Inf) = 0   ;
+                                            Phi_In          = -sum(sum(raw_In/T_In.*log_In_T_i,1),2) ...
+                                                              -sum(sum(raw_In/T_In.*log_In_T_j,1),2)    ; 
+                                            m_In            = exp(Phi_In/2) ;
+                                            
+                                            % OUT
+                                            numb_Out        =  s^2 -length(find(raw_Out==0)) ; %numero efectivo de i.s. no cero
+                                            
+                                            T_Out           =  sum(sum(raw_Out,1),2) ;  % total system output
+                                            log_Out         =  log(raw_Out/T_Out) ; 
+                                            log_Out(log_Out == -Inf) = 0    ;
+                                            H_Out           = -sum(sum(raw_Out/T_Out.*log_Out,1),2)/log(numb_Out) ;
+                                            
+                                            % m_Out
+                                            
+                                            T_i             =  repmat(sum(raw_Out,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_Out,2),1,s) ;
+                                            log_Out_T_i      =  log(raw_Out./T_i) ;
+                                            log_Out_T_j      =  log(raw_Out./T_j) ;
+                                            log_Out_T_i(isnan(log_Out_T_i))  = 0   ;
+                                            log_Out_T_j(isnan(log_Out_T_j))  = 0   ;
+                                            log_Out_T_i(log_Out_T_i == -Inf) = 0   ;
+                                            log_Out_T_j(log_Out_T_j == -Inf) = 0   ;
+                                            Phi_Out          = -sum(sum(raw_Out/T_Out.*log_Out_T_i,1),2) ...
+                                                              -sum(sum(raw_Out/T_Out.*log_Out_T_j,1),2) ;    
+                                            m_Out            = exp(Phi_Out/2);
+                                            
+                                            % In percapita
+                                            
+                                            ab_rep          =   ab(:,end-window:end) ;
+                                            ab_rep          =   repmat(ab_rep, [1 1 s]) ;
+                                            [ab_rep,nshifts]=   shiftdim(ab_rep,2) ;
+                                            
+                                            raw_pc_In       =   vi_CI_In./ab_rep + ;
+                                            raw_pc_In(isnan(raw_pc_In)) = 0 ;
+                                            raw_pc_In       =    mean(raw_pc_In,3)  ;
+                                            pc_numb_In      =   s^2 -length(find(raw_pc_In==0)) ;
+                                            pc_T_In         =   sum(sum(raw_pc_In,1),2) ; % total system input
+                                            pc_log_In       =   log(raw_pc_In/pc_T_In) ;
+                                            pc_log_In(pc_log_In == -Inf) = 0    ;
+                                            H_pc_In         =   -sum(sum(raw_pc_In/pc_T_In.*pc_log_In,1),2)/log(pc_numb_In); 
+                                            
+                                            % m_IN_pc
+                                            
+                                            T_i             =  repmat(sum(raw_pc_In,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_pc_In,2),1,s) ;
+                                            log_In_T_i      =  log(raw_pc_In./T_i) ;
+                                            log_In_T_j      =  log(raw_pc_In./T_j) ;
+                                            log_In_T_i(isnan(log_In_T_i))  = 0   ;
+                                            log_In_T_j(isnan(log_In_T_j))  = 0   ;
+                                            log_In_T_i(log_In_T_i == -Inf) = 0   ;
+                                            log_In_T_j(log_In_T_j == -Inf) = 0   ;
+                                            Phi_In_pc          = -sum(sum(raw_pc_In/pc_T_In.*log_In_T_i,1),2) ...
+                                                                -sum(sum(raw_pc_In/pc_T_In.*log_In_T_j,1),2)    ; 
+                                            m_In_pc            = exp(Phi_In_pc/2) ;
+                                            
+                                            % oUT percapita
+                                            
+                                            ab_rep          =   ab(:,end-window:end) ;
+                                            ab_rep          =   repmat(ab_rep', [1 1 s]) ; % ESTO CAMBIA CON RESPECTO AL OUT
+                                            [ab_rep,nshifts]=   shiftdim(ab_rep,1) ; %esto tambien cambia
+                                            raw_pc_Out      =   vi_CI_Out./ab_rep ;
+                                            raw_pc_Out(isnan(raw_pc_Out)) = 0 ;
+                                            raw_pc_Out      =   mean(raw_pc_Out,3) ; 
+                                            pc_numb_Out     =   s^2 -length(find(raw_pc_Out==0)) ;
+                                            pc_T_Out        =   sum(sum(raw_pc_Out,1),2) ; % total system input
+                                            pc_log_Out      =   log(raw_pc_Out/pc_T_Out) ;
+                                            pc_log_Out(pc_log_Out == -Inf) = 0    ;
+                                          
+                                            H_pc_Out = -sum(sum(raw_pc_Out/pc_T_Out.*pc_log_Out,1),2)/log(pc_numb_Out); 
+                                           
+                                            % m_Out_pc
+                                            
+                                            T_i             =  repmat(sum(raw_pc_Out,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_pc_Out,2),1,s) ;
+                                            log_Out_T_i      =  log(raw_pc_Out./T_i) ;
+                                            log_Out_T_j      =  log(raw_pc_Out./T_j) ;
+                                            log_Out_T_i(isnan(log_Out_T_i))  = 0   ;
+                                            log_Out_T_j(isnan(log_Out_T_j))  = 0   ;
+                                            log_Out_T_i(log_Out_T_i == -Inf) = 0   ;
+                                            log_Out_T_j(log_Out_T_j == -Inf) = 0   ;
+                                            Phi_Out_pc          = -sum(sum(raw_pc_Out/pc_T_Out.*log_Out_T_i,1),2) ...
+                                                                -sum(sum(raw_pc_Out/pc_T_Out.*log_Out_T_j,1),2) ;     
+                                            m_Out_pc            = exp(Phi_Out_pc/2) ;
+                                            
+                                            
+                                            %% Fuerzas de interaccion PRE TRANSIENTE
+                                            
+                                            window_pt = floor(58.18*2) ; %window pre transiente 
+                                            ab = ST.to_plotAdults ; %(:,1:window_pt) ;
+                                          
+                                            
+                                            
+                                            vi_CI_In        =   ST.to_plotConsume.Consume_In_mat(:,:,1:window_pt) ;
+                                            vi_CI_Out       =   ST.to_plotConsume.Consume_Out_mat(:,:,1:window_pt) ;
+                                            m_vi_CI_In      =   mean(vi_CI_In,3) ;  
+                                            m_vi_CI_Out     =   mean(vi_CI_Out,3) ;
+                                            raw_In          =   m_vi_CI_In ;
+                                            raw_Out         =   m_vi_CI_Out ;
+                                            
+                                            
+                                            % IN
+                                          
+                                            numb_In         =  s^2 -length(find(raw_In==0)); %numero efectivo de i.s. no cero
+                                            T_In            =  sum(sum(raw_In,1),2);  % total system input
+                                            log_In          =  log(raw_In/T_In) ;
+                                            log_In(log_In == -Inf) = 0    ;
+                                            H_In_pt            = -sum(sum(raw_In/T_In.*log_In,1),2)/log(numb_In); %dividido por el numero de interacciones
+                                            
+                                            % m_IN
+                                            
+                                            T_i             =  repmat(sum(raw_In,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_In,2),1,s) ;
+                                            log_In_T_i      =  log(raw_In./T_i) ;
+                                            log_In_T_j      =  log(raw_In./T_j) ;
+                                            log_In_T_i(isnan(log_In_T_i))  = 0   ;
+                                            log_In_T_j(isnan(log_In_T_j))  = 0   ;
+                                            log_In_T_i(log_In_T_i == -Inf) = 0   ;
+                                            log_In_T_j(log_In_T_j == -Inf) = 0   ;
+                                            Phi_In          = -sum(sum(raw_In/T_In.*log_In_T_i,1),2) ...
+                                                              -sum(sum(raw_In/T_In.*log_In_T_j,1),2)    ; 
+                                            m_In_pt            = exp(Phi_In/2) ;
+                                            
+                                            % OUT
+                                            numb_Out        =  s^2 -length(find(raw_Out==0)); %numero efectivo de i.s. no cero
+                                            T_Out           =  sum(sum(raw_Out,1),2) ; % total system output
+                                            log_Out         =  log(raw_Out/T_Out) ;
+                                            log_Out(log_Out == -Inf) = 0    ;
+                                            H_Out_pt           = -sum(sum(raw_Out/T_Out.*log_Out,1),2)/log(numb_Out) ;
+                                            
+                                            % m_Out
+                                            
+                                            T_i             =  repmat(sum(raw_Out,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_Out,2),1,s) ;
+                                            log_Out_T_i      =  log(raw_Out./T_i) ;
+                                            log_Out_T_j      =  log(raw_Out./T_j) ;
+                                            log_Out_T_i(isnan(log_Out_T_i))  = 0   ;
+                                            log_Out_T_j(isnan(log_Out_T_j))  = 0   ;
+                                            log_Out_T_i(log_Out_T_i == -Inf) = 0   ;
+                                            log_Out_T_j(log_Out_T_j == -Inf) = 0   ;
+                                            Phi_Out          = -sum(sum(raw_Out/T_Out.*log_Out_T_i,1),2) ...
+                                                              -sum(sum(raw_Out/T_Out.*log_Out_T_j,1),2) ;    
+                                            m_Out_pt            = exp(Phi_Out/2) ;
+                                            
+                                            % In percapita
+                                            
+                                            ab_rep          =   ab(:,1:window_pt) ;
+                                            ab_rep          =   repmat(ab_rep, [1 1 s]) ;
+                                            [ab_rep,nshifts]=   shiftdim(ab_rep,2) ;
+                                            raw_pc_In       =   vi_CI_In./ab_rep ;
+                                            raw_pc_In(isnan(raw_pc_In)) = 0 ;
+                                            raw_pc_In       =    mean(raw_pc_In,3)  ;
+                                            pc_numb_In      =   s^2 -length(find(raw_pc_In==0)) ;
+                                            pc_T_In         =   sum(sum(raw_pc_In,1),2) ; % total system input
+                                            pc_log_In       =   log(raw_pc_In/pc_T_In) ;
+                                            pc_log_In(pc_log_In == -Inf) = 0    ;
+                                            H_pc_In_pt         =   -sum(sum(raw_pc_In/pc_T_In.*pc_log_In,1),2)/log(pc_numb_In) ;
+                                            
+                                            % m_IN_pc
+                                            
+                                            T_i             =  repmat(sum(raw_pc_In,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_pc_In,2),1,s) ;
+                                            log_In_T_i      =  log(raw_pc_In./T_i) ;
+                                            log_In_T_j      =  log(raw_pc_In./T_j) ;
+                                            log_In_T_i(isnan(log_In_T_i))  = 0   ;
+                                            log_In_T_j(isnan(log_In_T_j))  = 0   ;
+                                            log_In_T_i(log_In_T_i == -Inf) = 0   ;
+                                            log_In_T_j(log_In_T_j == -Inf) = 0   ;
+                                            Phi_In_pc          = -sum(sum(raw_pc_In/pc_T_In.*log_In_T_i,1),2) ...
+                                                                -sum(sum(raw_pc_In/pc_T_In.*log_In_T_j,1),2)    ; 
+                                            m_In_pc_pt            = exp(Phi_In_pc/2) ;
+                                            
+                                            % oUT percapita
+                                            
+                                            ab_rep          =   ab(:,1:window_pt) ;
+                                            ab_rep          =   repmat(ab_rep', [1 1 s]) ; % ESTO CAMBIA CON RESPECTO AL OUT
+                                            [ab_rep,nshifts]=   shiftdim(ab_rep,1) ; %esto tambien cambia
+                                            raw_pc_Out      =   vi_CI_Out./ab_rep ;
+                                            raw_pc_Out(isnan(raw_pc_Out)) = 0 ;
+                                            raw_pc_Out      =   mean(raw_pc_Out,3) ; 
+                                            pc_numb_Out     =   s^2 -length(find(raw_pc_Out==0)) ;
+                                            pc_T_Out        =   sum(sum(raw_pc_Out,1),2) ; % total system input
+                                            pc_log_Out      =   log(raw_pc_Out/pc_T_Out) ;
+                                            pc_log_Out(pc_log_Out == -Inf) = 0    ;
+                                           
+                                            H_pc_Out_pt = -sum(sum(raw_pc_Out/pc_T_Out.*pc_log_Out,1),2)/log(pc_numb_Out) ; 
+                                           
+                                            % m_Out_pc
+                                            
+                                            T_i             =  repmat(sum(raw_pc_Out,1),s,1) ;
+                                            T_j             =  repmat(sum(raw_pc_Out,2),1,s) ;
+                                            log_Out_T_i      =  log(raw_pc_Out./T_i) ;
+                                            log_Out_T_j      =  log(raw_pc_Out./T_j) ;
+                                            log_Out_T_i(isnan(log_Out_T_i))  = 0   ;
+                                            log_Out_T_j(isnan(log_Out_T_j))  = 0   ;
+                                            log_Out_T_i(log_Out_T_i == -Inf) = 0   ;
+                                            log_Out_T_j(log_Out_T_j == -Inf) = 0   ;
+                                            Phi_Out_pc          = -sum(sum(raw_pc_Out/pc_T_Out.*log_Out_T_i,1),2) ...
+                                                                -sum(sum(raw_pc_Out/pc_T_Out.*log_Out_T_j,1),2) ;     
+                                            m_Out_pc_pt            = exp(Phi_Out_pc/2) ;
+                                            
+                                            %% APROXIMACION DE MODELACION DE FUERZAS DE INTERACCION 
+                                            
+                                            
+%                                             m_vi_CI_In = reshape(m_vi_CI_In,[s*s,1]);
+%                                             
+%                                             m_vi_CI_In = m_vi_CI_In(m_vi_CI_In>0);
+%                                             
+%                                             [y x] = hist(m_vi_CI_In,10);%[counts centers]
+%                                             
+%                                             figure
+%                                             hist(m_vi_CI_In,10)
+%                                             if size(x,1)/size(x,2) > 1
+%                                                 x = x' ;
+%                                             end
+%                                             
+                                          
+                                           
+                                            
+                                            %x = [  1  2 3 4  5 6]
+                                            %y = [ 1.0000    0.7071    0.5774    0.5000    0.4472    0.4082]
+                                            %y = [1.0000    0.2502    0.1112    0.0626    0.0401    0.0278]
+                                            
+                                            
+                                            %%%
+                                            
+                                            % fit model power law
+                                            %                                                 modelfun = @(b,x_a)(b(2) + x_a.^(-b(1)));
+                                            %                                                 opts = statset('nlinfit');
+                                            %                                                 opts.RobustWgtFun = 'bisquare';
+                                            %                                                 rng('default')
+                                            %                                                 beta0 = [.01 .01 ]  ;
+                                            %                                                 [beta ,R,J,CovB,MSE] = nlinfit(y,x,modelfun,beta0,opts)%,'ErrorModel','combined')
+                                            %                                                 %am = aic(x,y,beta,modelfun)
+                                            %                                                 beta(1) = 1/beta(1)
+                                            %                                                 modelplot = @(x_a2)(beta(2) + (x_a2).^(-beta(1)));
+                                            %                                                 beta
+                                            %                                                 figure
+                                            %                                                 plot(x,modelplot(x))
+                                            %                                                 hold on
+                                            %                                                 %hist(m_vi_CI)
+                                            %                                                 scatter(x,y)
+                                            %                                                 hold off
+                                            %                                                 legend(num2str(1/beta))
+                                            
+                                            % fit model power law ACCUMULATED
+                                            %                                                 modelfun = @(b,x_a)((1/(-b(1)+1))*x_a.^(-b(1)+1));
+                                            %                                                 y_c = cumsum(y);
+                                            %                                                 rng('default')
+                                            %                                                 beta0 = [-2];
+                                            %                                                 [beta,R,J,CovB,MSE] = nlinfit(x,y_c,modelfun,beta0);%,opts,'ErrorModel','combined')
+                                            %                                                 modelplot = @(beta,x_a2)((1/(-beta(1)+1))*(x_a2).^(-beta(1)+1));
+                                            %                                                 figure
+                                            %                                                 %hist(m_vi_CI(m_vi_CI>0))
+                                            %                                                 scatter(x,y_c)
+                                            %                                                 hold on
+                                            %                                                 plot(x,modelplot(beta,x))
+                                            %                                                 hold off
+                                            %                                                 legend(num2str(beta))
+                                            
+                                            %  fit model exponential (2params)
+                                            %                                                 modelfun = @(b,x_a)(b(2).*exp(-b(1)*x_a));
+                                            %                                                 rng('default')
+                                            %                                                 beta0 = [2,2];
+                                            %                                                 [beta,R,J,CovB,MSE] = nlinfit(x,y,modelfun,beta0);%,opts,'ErrorModel','combined')
+                                            %
+                                            %                                                 modelplot = @(beta,x_a2)(beta(2).*exp(-beta(1)*x_a2));
+                                            %                                                 figure
+                                            %                                                 %hist(m_vi_CI(m_vi_CI>0))
+                                            %                                                 scatter(x,y)
+                                            %                                                 hold on
+                                            %                                                 plot(x,modelplot(beta,x))
+                                            %                                                 hold off
+                                            %                                                 legend(num2str(beta))
+                                            
+                                            
+                                            
+                                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                            %vi=Variables_intermedias( ST.to_plotAdutls(:,end-window:end), ...
+                                            %   ST.to_plotConsume.Consume_In_mat(:,:,end-window:end),...
+                                            %  ST.to_plotConsume.Consume_Out_mat(:,:,end-window:end) )
+                                            
+                                            %end
+                                            %catch
+                                            %    disp('ERROR en medidasEPD!!');
+                                            %end
+                                            
+                                            
+                                            
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    
+    
+end
+
+
+end
+

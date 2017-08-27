@@ -1,0 +1,19 @@
+Instructivo Cluster
+
+Nombre de la tabla de resultados: ResultTable-v14-t1-Obj123.txt
+
+Nota, desde la versión v14 t1 es WinterPunishment_max, por lo que v1 = 1, significa que SI hay casitigo del invierno y v1 = 0, lo contrario.
+
+Parámetros  a correr Obj123
+Conect 		= [ 20 40 60 80 100]
+Richness 		= [ .1 .15 .20 .25 .30]
+varBif_aux	= 0
+vv1			= [0 1]
+vv2			= 2
+vv3  		= 1
+EPDP			= [0 .25 .5 .75 1]
+fenoRecA 		= [1 2]
+fenoDormA		= [1 2]
+TotalMatr		= 1:75
+Replicas 		= 1 
+

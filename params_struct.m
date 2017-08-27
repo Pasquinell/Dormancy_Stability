@@ -1,0 +1,236 @@
+function PD = params_struct()
+
+global m fenoRec fenoDorm %m es el numero de especies y N es el numero de estados de los dormates
+global v1 Latencia EPD_identity Limit_dormant_age ubicaBasales ubicaNoBasales EPD_identity_vec %varBif
+global varBif A AT TP
+%global LH replicas PH 
+%global N v2
+%RD = @(siz, var, sizV)  1;%( 1 + (rand(sizV,1)*siz -var)) ; 
+
+%%
+%%%%%%%%% PAR�METROS RELACIONADOS CON DORMANCIA
+
+%preguntas con los parametros de la lognormal : ver http://en.wikipedia.org/wiki/Log-normal_distribution
+%se eligio media =0 y sigma = ..25 con esto tenemos una variaci�n mas o
+%menos de .5 para un lado y .5 para el otro
+%sigma                   = 3*ones(m,1);%*unifrnd(.75,1.25,m,1)  ; %[.003 .03 .3].03 ; %0.003   %tasa retirada del banco de dormants
+sigma                   = 4*unifrnd(.85,1.15,m,1)  ; %
+
+
+eta                     = 1*unifrnd(.95,1,size(ubicaBasales,1),1) ; 
+kappa                   = 1*unifrnd(.95,1,size(ubicaNoBasales,1),1)  ;
+
+
+beta                    = NaN(m,1)      ;
+%beta(ubicaBasales)      = .374*ones(size(ubicaBasales,1),1);%*unifrnd(.75,1.25,size(ubicaBasales,1),1)          ;
+beta(ubicaBasales)      = 1 ;%.374*unifrnd(.85,1.15,size(ubicaBasales,1),1)          ;
+beta(ubicaNoBasales)    = 0         ;
+%epsilon                 = 2*ones(m,1);%*unifrnd(.75,1.25,m,1)        ; %2*...
+epsilon                 = 1*unifrnd(.95,1,m,1)        ; %2*...
+mort                    = .001  ; %mortalidad dormante
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% FENOLOGIAS (MODIFICADO PRINCIPIOS DE ENERO PARA OBJETIVO 4)
+
+%cualquier pregunta visitar objetivo 4 de la tesis de Urbani
+%cuando una especies no presenta el tipo de induccion, su valor max es cero
+
+
+EPD_setOne               = zeros(m,1);
+
+EPD_setOne(EPD_identity) = 1 ; % EPD_identity es el vector que indexa las especies que presentan diapausa
+ % ejeplo. EPD_identity = [ 2 5 7]' significa que las especies 2,5 y 7
+ % presentan diapausa. Entonces cuando evaluamos esto en un vector de
+ % tama�o m rellenados con 0, y eveluamos en 1 (EPD_setOne(EPD_identity) =
+ % 1 ;) nos va a entregar un vector de tama�o m con zeros en las especies
+ % que no presentan diapausa y unos en las especi3es que si presentan
+ % diapausa. Ejemplo de la salida EPD_setOne = [0 1 0 0 1 0 0 1]' las
+ % especiues 2,5 y 7 presentan diapausa.
+ 
+
+
+ 
+
+if fenoRec  == 1 
+ICte_identityR  = EPD_identity_vec ;
+IA_identityR    = [];
+IC_identityR    = []; 
+IHD_identityR   = [];
+IHP_identityR   = [];
+elseif  fenoRec  == 2                   
+ICte_identityR  = [];
+IA_identityR    = EPD_identity_vec ;
+IC_identityR    = [];
+IHD_identityR   = [];
+IHP_identityR   = [];
+elseif  fenoRec  == 3                  
+ICte_identityR  = [];
+IA_identityR    = [];
+IC_identityR    = EPD_identity_vec ;
+IHD_identityR   = [];
+IHP_identityR   = [];
+elseif  fenoRec  == 4                  
+ICte_identityR  = [];
+IA_identityR    = [];
+IC_identityR    = [];
+IHD_identityR   = EPD_identity_vec ;
+IHP_identityR   = [];
+elseif  fenoRec  == 5                  
+ICte_identityR  = [];
+IA_identityR    = [];
+IC_identityR    = [];
+IHD_identityR   = [];
+IHP_identityR   = EPD_identity_vec ;
+end
+
+
+if fenoDorm  == 1 
+ICte_identityD  = EPD_identity_vec ;
+IA_identityD    = [];
+IC_identityD    = []; 
+IHD_identityD   = [];
+IHP_identityD   = [];
+elseif  fenoDorm  == 2                   
+ICte_identityD  = [];
+IA_identityD    = EPD_identity_vec ;
+IC_identityD    = [];
+IHD_identityD   = [];
+IHP_identityD   = [];
+elseif  fenoDorm  == 3                  
+ICte_identityD  = [];
+IA_identityD    = [];
+IC_identityD    = EPD_identity_vec ;
+IHD_identityD   = [];
+IHP_identityD   = [];
+elseif  fenoDorm  == 4                  
+ICte_identityD  = [];
+IA_identityD    = [];
+IC_identityD    = [];
+IHD_identityD   = EPD_identity_vec ;
+IHP_identityD   = [];
+elseif  fenoDorm  == 5                  
+ICte_identityD  = [];
+IA_identityD    = [];
+IC_identityD    = [];
+IHD_identityD   = [];
+IHP_identityD   = EPD_identity_vec ;
+end
+
+ 
+max_ICteR        =      zeros(m,1);         
+max_IAR          =      zeros(m,1);
+max_ICR          =      zeros(m,1);
+max_IHDR         =      zeros(m,1);
+max_IHPR         =      zeros(m,1);
+
+max_ICteD        =      zeros(m,1);         
+max_IAD          =      zeros(m,1);
+max_ICD          =      zeros(m,1);
+max_IHDD         =      zeros(m,1);
+max_IHPD         =      zeros(m,1);
+
+max_ICteR(ICte_identityR)        = 1 ;%(24.9834/52.18) ;
+max_IAR(IA_identityR)            = 1 ; 
+max_ICR(IC_identityR)            = 1 ;
+max_IHDR(IHD_identityR)          = 1 ;
+max_IHPR(IHP_identityR)          = 1 ;
+
+max_ICteD(ICte_identityD)        = 1; %(24.9834/52.18)  ;  %OJO OJO este valor tal vez deba ser .5
+max_IAD(IA_identityD)            = 1 ; 
+max_ICD(IC_identityD)            = 1 ;
+max_IHDD(IHD_identityD)          = 1 ;
+max_IHPD(IHP_identityD)          = 1 ;
+
+
+
+sat_ICR                   	= .1;%*unifrnd(.75,1.25,m,1) ;
+sat_IHDR                  	= .1;%*unifrnd(.75,1.25,m,1) ;
+sat_IHPR                  	= .1;%*unifrnd(.75,1.25,m,1) ;
+
+
+sat_ICD                     = .1;%*unifrnd(.75,1.25,m,1) ;
+sat_IHDD                 	= .1;%*unifrnd(.75,1.25,m,1) ;
+sat_IHPD                  	= .1;%*unifrnd(.75,1.25,m,1) ;
+
+abrp                        = 3;%*unifrnd(.75,1.25,m,1) ; %abruptez
+ 
+rangofen = 2 ;
+DESFf                       = 1/52.18*(-11 +TP.*unifrnd(0,rangofen,m,1));  %variacion de un mes para adelante o un mes para atras
+DESFh                       = 1/52.18*(-7 +TP.*unifrnd(0,rangofen,m,1)); %+10
+
+no_t_dep = find(sum(A,2)==0 ) ; % estas especies no tienen depredadores
+zeros_no_t_dep  = zeros(m,1);
+zeros_si_t_dep  = ones(m,1);
+zeros_no_t_dep(no_t_dep) = 1 ; 
+zeros_si_t_dep(no_t_dep) = 0 ;
+
+zeros_aux_basales  = zeros(m,1);
+zeros_aux_no_basales  = ones(m,1);
+zeros_aux_basales(ubicaBasales) = 1 ;
+zeros_aux_no_basales(ubicaBasales) = 0 ;
+
+ICte_funR       =       max_ICteR ;
+ph_germination  = @(t)  spulse(2*(t/52.18-DESFf+.01-floor(t/52.18-DESFf+.01)),16).*EPD_setOne.*max_IAR; %f(t) ;
+%ph_germination  = @(t)  spulse(2*(t/52.18-DESFf+.01-floor(t/52.18-DESFf+.01)),16).*max_IAR; %f(t) ;
+IC_funR         = @(x) -(max_ICR.*(x.^abrp))./(sat_ICR.^abrp+(x.^abrp))+max_ICR ; 
+IHD_funR        = @(x,t_aa) ((-(max_IHDR.*(A*(x.^abrp)))./(sat_IHDR.^abrp+A*(x.^abrp))+max_IHDR).*zeros_si_t_dep + ...
+    spulse(2*(t_aa/52.18-DESFf+.01-floor(t_aa/52.18-DESFf+.01)),16).*EPD_setOne.*max_IHDR.*zeros_no_t_dep);
+
+IHP_funR        = @(x,t_a)  ((max_IHPR.*(AT*(x.^abrp)))./(sat_IHPR.^abrp+AT*(x.^abrp)).*zeros_aux_no_basales + ... 
+    spulse(2*(t_a/52.18-DESFf+.01-floor(t_a/52.18-DESFf+.01)),16).*EPD_setOne.*max_IHPR.*zeros_aux_basales);
+
+
+ICte_funD       =       max_ICteD ;
+ph_production   = @(t)  spulse(2*(t/52.18+.01-DESFh-floor(t/52.18+.01-DESFh)),16).*EPD_setOne.*max_IAD ; %h(t)
+%ph_production   = @(t)  spulse(2*(t/52.18-5/12+.01-DESFh-floor(t/52.18-5/12+.01-DESFh)),16).*max_IAD ; %h(t)
+IC_funD         = @(x) (max_ICD.*(x.^abrp))./(sat_ICD^abrp+(x.^abrp)); 
+IHD_funD        = @(x,t_aa) (((max_IHDD.*(A*(x.^abrp)))./(sat_IHDD.^abrp+A*(x.^abrp))).*zeros_si_t_dep+ ... 
+    spulse(2*(t_aa/52.18+.01-DESFh-floor(t_aa/52.18+.01-DESFh)),16).*EPD_setOne.*max_IHDD.*zeros_no_t_dep) ;
+
+IHP_funD       = @(x,t_a) ((-(max_IHPD.*(AT*(x.^abrp)))./(sat_IHPD.^abrp+AT*(x.^abrp)) +max_IHPD).*zeros_aux_no_basales + ... 
+    spulse(2*(t_a/52.18+.01-DESFh-floor(t_a/52.18+.01-DESFh)),16).*EPD_setOne.*max_IHPD.*zeros_aux_basales);
+
+
+%% 
+%bc_seeds               = @(u) u>Latencia*52.18 & u<5*52.18;%((g_inf-g_zero)./(u.^g_alpha + (g_tau).^g_alpha)).*u.^g_alpha + g_zero ; %g(u)
+bc_seeds                = @ (u) u>Latencia & u< Limit_dormant_age;  % 5=Max_age???
+
+
+min_wp                  = 0	;
+max_wp                  = v1 ;
+real_max_wp             = 1; % 4 8 16 
+
+winter_punish           = @(t) real_max_wp.*(max_wp-min_wp)*(cos(t/52.18*2*pi-12/52.18*2*pi)*0.5+0.5)+min_wp; %antes del cambio de wp era -17/52.18*2*pi
+%winter_punish          = @ (t) (max_wp-min_wp)*(cos(t*0.081183459467919)*0.5+0.5)+min_wp;
+
+PD = struct( 'eta', eta, 'kappa', kappa,  'sigma', sigma, 'beta', beta, 'epsilon', epsilon, 'mort',mort, ... 
+      'ph_germination', ph_germination, 'ph_production', ph_production, ... %'DESF', DESF, ...
+     'bc_seeds',bc_seeds, 'winter_punish',winter_punish, ...
+     'EPD_identity_vec',EPD_identity_vec, ...
+     'ICte_funR' ,ICte_funR ,'IC_funR',IC_funR,'IHD_funR',IHD_funR ,'IHP_funR',IHP_funR, ...
+     'ICte_funD' ,ICte_funD ,'IC_funD',IC_funD,'IHD_funD',IHD_funD ,'IHP_funD',IHP_funD) ; 
+
+
+
+ 
+ 
+
+
+%%
+%P = [ r a h epsilon mu eta kappa m1 m2 theta sigma1 sigma2 desfase k  beta epsilon_s epsilon_a] 
+%%%
+% Formaci�n 
+% crowding 25 a 250 g/L (Gilbert/ di�guez 2010, Carmana et al. 2011)
+% Eclosi�n 
+% Edad 1 dia a 1 semana dias 
+% pocos dias? - 5 -6 semanas (muy variable) (purminot et al. 2982, Gilbert 2001)
+% Luz (bajas ondas)
+% Longitud de onda 400 - 480
+%                 347-400 (faltan unidades) 
+%                 (Blanchot?Pourniot 1982, Hagiwara et al 1995)
+% Viabilidad(cuanto duran los huevos)
+% En aguas permanentas 12 a 24 m? (Chihapun 2005)
+
+end
